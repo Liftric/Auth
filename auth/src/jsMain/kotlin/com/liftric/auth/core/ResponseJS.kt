@@ -3,7 +3,7 @@
 /**
  * Adapted [Response.kt] classes for Typescript usage (Map and List aren't compatible for [kotlin.js.JsExport])
  */
-package com.liftric.auth.base
+package com.liftric.auth.core
 
 import kotlinx.serialization.Serializable
 
@@ -33,8 +33,8 @@ data class SignInResponseJS(
 
 @Serializable
 data class GetUserResponseJS(
-    val MFAOptions: MFAOptions = MFAOptions(),
-    val PreferredMfaSetting: String = "",
+    val MFAOptions: MFAOptions? = null,
+    val PreferredMfaSetting: String? = null,
     val UserAttributes : Array<UserAttribute> = arrayOf(),
     val UserMFASettingList: Array<String> = arrayOf(),
     val Username: String

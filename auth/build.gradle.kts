@@ -54,6 +54,8 @@ kotlin {
         binaries.library()
     }
 
+    jvm()
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -77,6 +79,11 @@ kotlin {
                 implementation(Libs.ktorAndroid)
             }
         }
+        val jvmMain by getting {
+            dependencies {
+                implementation(Libs.ktorJvm)
+            }
+        }
         val androidTest by getting {
             dependencies {
                 implementation(TestLibs.RoboElectrics) {
@@ -85,6 +92,12 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
                 implementation(TestLibs.TestCore)
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
             }
         }
         val iosMain by getting {
@@ -152,7 +165,7 @@ afterEvaluate {
 
 tasks {
     val iosX64Test by existing(KotlinNativeSimulatorTest::class) {
-        filter.excludeTestsMatching("com.liftric.auth.AuthHandlerIntegrationTests")
+        filter.excludeTestsMatching("com.liftric.auth.IdentityProviderClientTests")
     }
 
     val testSecrets by creating(GetVaultSecretTask::class) {
@@ -162,14 +175,14 @@ tasks {
     val createJsEnvHack by creating {
         outputs.dir("$buildDir/gen")
 
-        if (System.getenv("region") == null || System.getenv("clientid") == null) {
-            // github ci provides region and clientid envs, locally we'll use vault directly
+        if (System.getenv("region") == null || System.getenv("clientId") == null) {
+            // github ci provides region and clientId envs, locally we'll use vault directly
             dependsOn(testSecrets)
         }
 
         doFirst {
-            val (clientid, region) = with(testSecrets.secret.get()) {
-                ((System.getenv("clientid") ?: this["client_id_dev"].toString()) to
+            val (clientId, region) = with(testSecrets.secret.get()) {
+                ((System.getenv("clientId") ?: this["client_id_dev"].toString()) to
                         (System.getenv("region") ?: this["client_region_dev"].toString()))
             }
 
@@ -180,7 +193,7 @@ tasks {
                     """
                 val env = mapOf(
                     "region" to "$region",
-                    "clientid" to "$clientid",
+                    "clientId" to "$clientId",
                 )
             """.trimIndent()
                 )
@@ -228,7 +241,7 @@ publishing {
 
         pom {
             name.set(artifactName)
-            description.set("Lightweight AWS Cognito client for Kotlin Multiplatform projects.")
+            description.set("Lightweight AWS Cognito Identity Provider for Kotlin Multiplatform projects.")
             url.set("https://github.com/Liftric/Auth")
 
             licenses {
@@ -281,7 +294,7 @@ npmPublishing {
                     "aws"
                 )
                 license = "MIT"
-                description = "Lightweight AWS Cognito client."
+                description = "Lightweight AWS Cognito Identity Provider."
                 homepage = "https://github.com/Liftric/Auth"
                 bugs = mutableMapOf<String, Any?>().apply {
                     put("url", "https://github.com/Liftric/Auth/issues")

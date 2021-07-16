@@ -9,6 +9,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
+import kotlin.jvm.JvmInline
 
 @Serializer(forClass = CognitoIdToken::class)
 internal object CognitoIdTokenSerializer : KSerializer<CognitoIdTokenClaims> {
@@ -16,16 +17,13 @@ internal object CognitoIdTokenSerializer : KSerializer<CognitoIdTokenClaims> {
 
     override val descriptor: SerialDescriptor = stringToJsonElementSerializer.descriptor
 
-    private inline class MapDecoder(val json: Json) {
-        private inline fun missingFieldError(name: String): Nothing {
-            throw SerializationException("Missing field $name")
-        }
-
+    @JvmInline
+    private value class MapDecoder(val json: Json) {
         inline fun <reified T> Map<String, JsonElement>.decodeOrNull(key: String): T? =
             get(key)?.let { json.decodeFromJsonElement<T>(it) }
 
         inline fun <reified T> Map<String, JsonElement>.decode(key: String): T =
-            get(key)?.let { json.decodeFromJsonElement<T>(it) } ?: missingFieldError(key)
+            get(key)?.let { json.decodeFromJsonElement<T>(it) } ?: throw SerializationException("Missing field $key")
     }
 
     override fun deserialize(decoder: Decoder): CognitoIdTokenClaims {
@@ -37,7 +35,7 @@ internal object CognitoIdTokenSerializer : KSerializer<CognitoIdTokenClaims> {
             val customAttributes = jsonMap.filter { (key, _) ->
                 key.contains("custom")
             }.map { (key, value) ->
-                key to if (value.jsonPrimitive.isString) {
+                key.removePrefix("custom:") to if (value.jsonPrimitive.isString) {
                     json.decodeFromJsonElement(String.serializer(), value)
                 } else {
                     json.decodeFromJsonElement(Long.serializer(), value).toString()
@@ -119,7 +117,7 @@ internal object CognitoIdTokenSerializer : KSerializer<CognitoIdTokenClaims> {
         value.iat.let { map["iat"] = json.encodeToJsonElement(it) }
         value.scope?.let { map["scope"] = json.encodeToJsonElement(it) }
         value.tokenUse.let { map["token_user"] = json.encodeToJsonElement(it) }
-        value.customAttributes?.forEach { map[it.key] = json.encodeToJsonElement(it.value) }
+        value.customAttributes?.forEach { map["custom:${it.key}"] = json.encodeToJsonElement(it.value) }
 
         encoder.encodeSerializableValue(stringToJsonElementSerializer, map)
     }

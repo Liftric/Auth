@@ -35,6 +35,9 @@ object Libs {
     /* Android */
     const val ktorAndroid = "io.ktor:ktor-client-android:${Versions.ktor}"
 
+    /* JVM */
+    const val ktorJvm = "io.ktor:ktor-client-cio:${Versions.ktor}"
+
     /* iOS */
     const val ktorIOS = "io.ktor:ktor-client-ios:${Versions.ktor}"
 

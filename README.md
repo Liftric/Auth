@@ -3,21 +3,24 @@
 ![OSS Sonatype (Releases)](https://img.shields.io/nexus/r/com.liftric/auth?label=Sonatype%20OSSRH%20%28Releases%29&server=https%3A%2F%2Fs01.oss.sonatype.org)
 ![npm (scoped)](https://img.shields.io/npm/v/@liftric/auth)
 
-# Auth
+# Cognito-idp
 
-Auth is a lightweight AWS Cognito client for Kotlin Multiplatform projects
+Lightweight AWS Cognito Identity Provider client for Kotlin Multiplatform and Typescript projects.
 
-> In its current state it provides only the bare minimum that was needed for our project. Feel free to contribute if there is something missing for you.
+> Not all requests, errors, and auth flows are implemented.  
+> Feel free to [contribute](Contributing.md) if there is something missing for you.
 
 ## Import
 
 ### Kotlin
 
+#### Gradle 
+
 ```kotlin
 sourceSets {
     val commonMain by getting {
         dependencies {
-            implementation("com.liftric:auth:<version>")
+            implementation("com.liftric:cognito-idp:<version>")
         }
     }
 }
@@ -27,59 +30,59 @@ sourceSets {
 
 #### Yarn
 ```bash
-yarn add @liftric/auth@<version>
+yarn add @liftric/cognito-idp@<version>
 ```
 #### npm
 ```sh
-npm i @liftric/auth@<version>
+npm i @liftric/cognito-idp@<version>
 ```
 
 ## How-to
 
-### Instantiating
-
-The handler needs a configuration object consisting of the region code and the client ID.
-
-```kotlin
-val configuration = Configuration(region = Region.euCentral1,
-                                  clientId = "CLIENT_ID") 
-```
+### Init
 
 #### Kotlin
 
 ```kotlin
-val authHandler = AuthHandler(configuration) 
+val provider = IdentityProviderClient("<region>", "<clientId>") 
 ```
 
 #### Typescript
 
 ```typescript
-import {AuthHandlerJS} from '@liftric/auth';
+import {IdentityProviderClientJS} from '@liftric/cognito-idp';
 
-const auth = new AuthHandlerJS('<regionString>', '<clientId>');
+const provider = new IdentityProviderClientJS('<region>', '<clientId>');
 ```
 
-### API
-
-General usage of the request methods.
+### Usage
 
 #### Kotlin
 
-All methods are suspending and will return a `Result<T>` object which wraps the desired return object `T` and can contain an exception.
+All methods are suspending and return a [Result](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/)<T> object.
 
 ```kotlin
-val response = signUp(username = "user", password = "password")
-if (response.isSuccess) {
-    println(signUpResponse.getOrNull())
-} else {
-    println(signUpResponse.exceptionOrNull())
-}
+provider.signUp("user", "password").fold(
+    onSuccess = {
+        // Do something
+    },
+    onFailure = {
+        // Handle exceptions
+    }
+)
 ```
 
 #### Typescript
 
-All methods return a `Promise` that returns the desired object `T` on success.
+All methods return a [Promise](https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Global_Objects/Promise)<T> object.
 
+### Errors
+
+Request related exceptions are of type `IdentityProviderException`. They contain the http `status` code and the `message`. Common AWS exceptions are implemented as subclasses. In case that we don't have implemented the exception type it will default to ´IdentityProviderException.Unknown´, which will contain the AWS exception `type`.
+
+Network related exceptions (e.g. no internet) are of type `IOException`.
+
+### Requests 
 #### Sign Up
 
 Signs up the user.
@@ -87,11 +90,8 @@ Signs up the user.
 Attributes are optional.
 
 ```kotlin
-val attribute = UserAttribute(Name = "email", Value = "name@url.tld")
-
-signUp(username = "USERNAME", password = "PASSWORD",
-       attributes = listOf(attribute)): Result<SignUpResponse>
-...
+val attribute = UserAttribute("email", "name@url.tld")
+signUp("<username>", "<password>", listOf(attribute)): Result<SignUpResponse>
 ```
 
 #### Confirm Sign Up
@@ -99,7 +99,7 @@ signUp(username = "USERNAME", password = "PASSWORD",
 Confirms the sign up (also the delivery medium).
 
 ```kotlin
-confirmSignUp(username = "USERNAME", confirmationCode = "CODE_FROM_DELIVERY_MEDIUM"): Result<Unit>
+confirmSignUp("<username>", "<confirmationCode>"): Result<Unit>
 ```
 
 #### Sign In
@@ -107,7 +107,7 @@ confirmSignUp(username = "USERNAME", confirmationCode = "CODE_FROM_DELIVERY_MEDI
 Signs in the users.
 
 ```kotlin
-signIn(username = "USERNAME", password = "PASSWORD"): Result<SignInResponse>
+signIn("<username>", "<password>"): Result<SignInResponse>
 ```
 
 #### Refresh access token
@@ -117,7 +117,7 @@ Refreshes access token based on refresh token that's retrieved from an earlier s
 ```kotlin
 val signInResponse: SignInResponse = ... // from earlier login or refresh
 val refreshToken = signInResponse.AuthenticationResult.RefreshToken
-refresh(refreshToken = refreshToken): Result<SignInResponse>
+refresh(refreshToken): Result<SignInResponse>
 ```
 
 #### Get Claims
@@ -126,17 +126,16 @@ You can retrieve the claims of both the IdTokens' and AccessTokens' payload by c
 
 ```kotlin
 val idToken = CognitoIdToken(idTokenString)
-// or
-val accessToken = CognitoAccessToken(accessTokenString)
-
 val phoneNumber = idToken.claims.phoneNumber
 val sub = idToken.claims.sub
 ```
 
-Custom attributes of the IdToken get mapped into `customAttributes`
+Custom attributes of the IdToken get mapped into `customAttributes`.
+
+You have to drop the `custom:` prefix.
 
 ```kotlin
-val twitter = idToken.claims.customAttributes["custom:twitter"]
+val twitter = idToken.claims.customAttributes["twitter"]
 ```
 
 #### Get User
@@ -146,7 +145,7 @@ Returns the users attributes and metadata on success.
 More info about this in the [official documentation](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_GetUser.html).
 
 ```kotlin
-getUser(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST"): Result<GetUserResponse>
+getUser("<accessToken>"): Result<GetUserResponse>
 ```
 
 #### Update User Attributes
@@ -154,8 +153,8 @@ getUser(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST"): Result<GetUserResponse>
 Updates the users attributes (e.g. email, phone number, ...).
 
 ```kotlin
-updateUserAttributes(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST",
-                     attributes = listOf(...)): Result<UpdateUserAttributesResponse>
+val attributes: List<UserAttribute> = ...
+updateUserAttributes("<accessToken>", attributes): Result<UpdateUserAttributesResponse>
 ```
 
 #### Change Password
@@ -163,9 +162,7 @@ updateUserAttributes(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST",
 Updates the users password 
 
 ```kotlin
-changePassword(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST",
-               currentPassword = "OLD_PW",
-               newPassword = "NEW_PW"): Result<Unit>
+changePassword("<accessToken>", "<currentPassword>", "<newPassword>"): Result<Unit>
 ```
 
 #### Forgot Password
@@ -175,7 +172,7 @@ Invokes password forgot and sends a confirmation code the the users' delivery me
 More info about the ForgotPasswordResponse in the [official documentation](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_CodeDeliveryDetailsType.html).
 
 ```kotlin
-forgotPassword(username = "USERNAME"): Result<ForgotPasswordResponse>
+forgotPassword("<username>"): Result<ForgotPasswordResponse>
 ```
 
 #### Confirm Forgot Password
@@ -183,8 +180,7 @@ forgotPassword(username = "USERNAME"): Result<ForgotPasswordResponse>
 Confirms forgot password.
 
 ```kotlin
-confirmForgotPassword(confirmationCode = "CODE_FROM_DELIVERY_MEDIUM", username = "USERNAME", 
-                      password = "NEW_PASSWORD_FROM_DELIVERY_MEDIUM"): Result<Unit>
+confirmForgotPassword("<confirmationCode>", "<username>", "<newPassword>"): Result<Unit>
 ```
 
 #### Get user Attribute Verification Code
@@ -192,7 +188,7 @@ confirmForgotPassword(confirmationCode = "CODE_FROM_DELIVERY_MEDIUM", username =
 Gets the user attribute verification code for the specified attribute name
 
 ```kotlin
-getUserAttributeVerificationCode(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST", attributeName = "EMAIL", clientMetadata = null): Result<GetAttributeVerificationCodeResponse>
+getUserAttributeVerificationCode("<accessToken>", "<attributeName>", "<clientMetadata>"): Result<GetAttributeVerificationCodeResponse>
 ```
 
 #### Verify User Attribute
@@ -200,7 +196,7 @@ getUserAttributeVerificationCode(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST", att
 Verifies the specified user attribute.
 
 ```kotlin
-verifyUserAttribute(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST", attributeName = "EMAIL", code = "CODE_FROM_DELIVERY_MEDIUM"): Result<Unit>
+verifyUserAttribute("<accessToken>", "<attributeName>", "<confirmationCode>"): Result<Unit>
 ```
 
 #### Sign Out
@@ -208,7 +204,7 @@ verifyUserAttribute(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST", attributeName = 
 Signs out the user globally.
 
 ```kotlin
-signOut(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST"): Result<SignOutResponse>
+signOut("<accessToken>"): Result<SignOutResponse>
 ```
 
 #### Revoke Token
@@ -216,7 +212,7 @@ signOut(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST"): Result<SignOutResponse>
 Revokes all access tokens generated by the refresh token.
 
 ```kotlin
-revokeToken(refreshToken = "TOKEN_FROM_SIGN_IN_REQUEST"): Result<Unit>
+revokeToken("<refreshToken>"): Result<Unit>
 ```
 
 #### Delete User
@@ -224,21 +220,9 @@ revokeToken(refreshToken = "TOKEN_FROM_SIGN_IN_REQUEST"): Result<Unit>
 Deletes the user from the user pool.
 
 ```kotlin
-deleteUser(accessToken = "TOKEN_FROM_SIGN_IN_REQUEST"): Result<Unit>
+deleteUser("<accessToken>"): Result<Unit>
 ```
-
-## Contributing
-
-Auth is a simple kotlin project with one caveat: We're using a live Cogntio Userpool for integration tests and 
-the values are provided using code generation at compile time. 
-
-The build needs both `region` and `clientid` configured, either using our hashicorp vault cluster (obviously not accessible from the outside),
-or via env var (github actions approach). `region` expects the AWS Region Code for the target region, like "us-east-1".
-
-So if you only want to build the project, provide `region` and `clientid` env var with garbage values...
-
-... and if you want to execute to tests yourself, you can use your own congito user pool client values.
 
 ## License
 
-Auth is available under the MIT license. See the LICENSE file for more info.
+Cognito-idp is available under the MIT license. See the LICENSE file for more info.

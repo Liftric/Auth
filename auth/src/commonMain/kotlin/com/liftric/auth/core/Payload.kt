@@ -1,32 +1,32 @@
-package com.liftric.auth.base
+package com.liftric.auth.core
 
 import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 
 @Serializable
-internal data class Authentication(
+internal data class SignIn(
     val AuthFlow: String,
     val ClientId: String,
-    val AuthParameters: AuthParameters
-)
+    val AuthParameters: Parameters
+) {
+    @Serializable
+    internal data class Parameters(
+        val USERNAME: String,
+        val PASSWORD: String
+    )
+}
 
 @Serializable
-internal data class AuthParameters(
-    val USERNAME: String,
-    val PASSWORD: String
-)
-
-@Serializable
-internal data class RefreshAuthentication(
+internal data class Refresh(
     val AuthFlow: String,
     val ClientId: String,
-    val AuthParameters: RefreshParameters
-)
-
-@Serializable
-internal data class RefreshParameters(
-    val REFRESH_TOKEN: String
-)
+    val AuthParameters: Parameters
+) {
+    @Serializable
+    internal data class Parameters(
+        val REFRESH_TOKEN: String
+    )
+}
 
 @Serializable
 internal data class AccessToken(
@@ -51,7 +51,7 @@ internal data class SignUp(
     val ClientId: String,
     val Password: String,
     val Username: String,
-    val UserAttributes: List<UserAttribute> = listOf()
+    val UserAttributes: List<UserAttribute>
 )
 
 @Serializable
@@ -78,8 +78,8 @@ internal data class ConfirmForgotPassword(
 @JsExport
 @Serializable
 data class UserAttribute(
-    val Name: String = "",
-    val Value: String = ""
+    val Name: String,
+    val Value: String
 )
 
 @Serializable
@@ -90,14 +90,14 @@ internal data class UpdateUserAttributes(
 
 @Serializable
 internal data class GetUserAttributeVerificationCode(
-    val AccessToken: String = "",
-    val AttributeName: String = "",
-    val ClientMetadata: Map<String, String>? = mapOf()
+    val AccessToken: String,
+    val AttributeName: String,
+    val ClientMetadata: Map<String, String>? = null
 )
 
 @Serializable
 internal data class VerifyUserAttribute(
-    val AccessToken: String = "",
-    val AttributeName: String = "",
-    val Code: String = ""
+    val AccessToken: String,
+    val AttributeName: String,
+    val Code: String
 )

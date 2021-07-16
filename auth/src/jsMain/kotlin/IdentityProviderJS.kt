@@ -1,34 +1,32 @@
 @file:JsExport
 
-import com.liftric.auth.AuthHandler
-import com.liftric.auth.Configuration
-import com.liftric.auth.base.*
+import com.liftric.auth.IdentityProviderClient
+import com.liftric.auth.core.*
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.promise
 import kotlin.js.Promise
 
 /**
- * Typescript compatible [AuthHandler] implementation.
+ * Typescript compatible [IdentityProviderClient] implementation.
  */
-class AuthHandlerJS(regionString: String, clientId: String) {
-    private val region = Region.values().first { it.code == regionString }
-    private val handler: AuthHandler = AuthHandler(Configuration(region, clientId))
+class IdentityProviderClientJS(region: String, clientId: String) {
+    private val provider: IdentityProviderClient = IdentityProviderClient(region, clientId)
 
     fun signUp(username: String, password: String, attributes: Array<UserAttribute>? = null): Promise<SignUpResponse> =
         MainScope().promise {
-            handler.signUp(username, password, attributes?.toList())
+            provider.signUp(username, password, attributes?.toList())
                 .getOrThrow()
         }
 
     fun confirmSignUp(username: String, confirmationCode: String): Promise<Unit> =
         MainScope().promise {
-            handler.confirmSignUp(username, confirmationCode)
+            provider.confirmSignUp(username, confirmationCode)
                 .getOrThrow()
         }
 
     fun signIn(username: String, password: String): Promise<SignInResponseJS> =
         MainScope().promise {
-            handler.signIn(username, password)
+            provider.signIn(username, password)
                 .getOrThrow().let {
                     SignInResponseJS(
                         it.AuthenticationResult,
@@ -39,7 +37,7 @@ class AuthHandlerJS(regionString: String, clientId: String) {
 
     fun refresh(refreshToken: String): Promise<SignInResponseJS> =
         MainScope().promise {
-            handler.refresh(refreshToken)
+            provider.refresh(refreshToken)
                 .getOrThrow().let {
                     SignInResponseJS(
                         it.AuthenticationResult,
@@ -50,7 +48,7 @@ class AuthHandlerJS(regionString: String, clientId: String) {
 
     fun getUser(accessToken: String): Promise<GetUserResponseJS> =
         MainScope().promise {
-            handler.getUser(accessToken)
+            provider.getUser(accessToken)
                 .getOrThrow().let {
                     GetUserResponseJS(
                         it.MFAOptions,
@@ -67,7 +65,7 @@ class AuthHandlerJS(regionString: String, clientId: String) {
         attributes: Array<UserAttribute>
     ): Promise<UpdateUserAttributesResponseJS> =
         MainScope().promise {
-            handler.updateUserAttributes(accessToken, attributes.toList())
+            provider.updateUserAttributes(accessToken, attributes.toList())
                 .getOrThrow().let {
                     UpdateUserAttributesResponseJS(it.CodeDeliveryDetailsList.toTypedArray())
                 }
@@ -75,19 +73,19 @@ class AuthHandlerJS(regionString: String, clientId: String) {
 
     fun changePassword(accessToken: String, currentPassword: String, newPassword: String): Promise<Unit> =
         MainScope().promise {
-            handler.changePassword(accessToken, currentPassword, newPassword)
+            provider.changePassword(accessToken, currentPassword, newPassword)
                 .getOrThrow()
         }
 
     fun forgotPassword(username: String): Promise<ForgotPasswordResponse> =
         MainScope().promise {
-            handler.forgotPassword(username)
+            provider.forgotPassword(username)
                 .getOrThrow()
         }
 
     fun confirmForgotPassword(confirmationCode: String, username: String, password: String): Promise<Unit> =
         MainScope().promise {
-            handler.confirmForgotPassword(confirmationCode, username, password)
+            provider.confirmForgotPassword(confirmationCode, username, password)
                 .getOrThrow()
         }
 
@@ -97,7 +95,7 @@ class AuthHandlerJS(regionString: String, clientId: String) {
         clientMetadata: Array<MapEntry>? = null
     ): Promise<GetAttributeVerificationCodeResponse> =
         MainScope().promise {
-            handler.getUserAttributeVerificationCode(
+            provider.getUserAttributeVerificationCode(
                 accessToken,
                 attributeName,
                 clientMetadata?.associate { it.key to it.value })
@@ -106,25 +104,25 @@ class AuthHandlerJS(regionString: String, clientId: String) {
 
     fun verifyUserAttribute(accessToken: String, attributeName: String, code: String): Promise<Unit> =
         MainScope().promise {
-            handler.verifyUserAttribute(accessToken, attributeName, code)
+            provider.verifyUserAttribute(accessToken, attributeName, code)
                 .getOrThrow()
         }
 
     fun signOut(accessToken: String): Promise<Unit> =
         MainScope().promise {
-            handler.signOut(accessToken)
+            provider.signOut(accessToken)
                 .getOrThrow()
         }
 
     fun revokeToken(refreshToken: String): Promise<Unit> =
         MainScope().promise {
-            handler.revokeToken(refreshToken)
+            provider.revokeToken(refreshToken)
                 .getOrThrow()
         }
 
     fun deleteUser(accessToken: String): Promise<Unit> =
         MainScope().promise {
-            handler.deleteUser(accessToken)
+            provider.deleteUser(accessToken)
                 .getOrThrow()
         }
 }

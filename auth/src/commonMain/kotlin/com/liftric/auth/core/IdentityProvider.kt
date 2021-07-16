@@ -1,12 +1,6 @@
-package com.liftric.auth
+package com.liftric.auth.core
 
-import com.liftric.auth.base.*
-import com.liftric.auth.jwt.Base64
-import com.liftric.auth.jwt.CognitoAccessToken
-import com.liftric.auth.jwt.CognitoIdToken
-import kotlinx.serialization.json.Json
-
-interface Auth {
+interface IdentityProvider {
     /**
      * Signs up a new user
      * @param username The username

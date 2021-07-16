@@ -3,7 +3,7 @@
 /**
  * Don't forget to check [ResponseJS.kt] when doing changes here :)
  */
-package com.liftric.auth.base
+package com.liftric.auth.core
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -27,33 +27,33 @@ data class SignInResponse(
 @JsExport
 @Serializable
 data class AuthenticationResult(
-    val AccessToken: String = "",
-    val ExpiresIn: Int = 0,
-    val IdToken: String = "",
-    val RefreshToken: String = "",
-    val TokenType: String = ""
+    val AccessToken: String,
+    val ExpiresIn: Int,
+    val IdToken: String,
+    val RefreshToken: String? = null,
+    val TokenType: String
 )
 
 @JsExport
 @Serializable
 data class SignUpResponse(
-    val CodeDeliveryDetails: CodeDeliveryDetails = CodeDeliveryDetails(),
+    val CodeDeliveryDetails: CodeDeliveryDetails? = null,
     val UserConfirmed: Boolean = false,
-    val UserSub: String = ""
+    val UserSub: String
 )
 
 @JsExport
 @Serializable
 data class CodeDeliveryDetails(
-    val AttributeName: String = "",
-    val DeliveryMedium: String = "",
-    val Destination: String = ""
+    val AttributeName: String,
+    val DeliveryMedium: String,
+    val Destination: String
 )
 
 @Serializable
 data class GetUserResponse(
-    val MFAOptions: MFAOptions = MFAOptions(),
-    val PreferredMfaSetting: String = "",
+    val MFAOptions: MFAOptions? = null,
+    val PreferredMfaSetting: String? = null,
     val UserAttributes: List<UserAttribute> = listOf(),
     val UserMFASettingList: List<String> = listOf(),
     val Username: String
@@ -62,8 +62,8 @@ data class GetUserResponse(
 @JsExport
 @Serializable
 data class MFAOptions(
-    val AttributeName: String = "",
-    val DeliveryMedium: String = ""
+    val AttributeName: String,
+    val DeliveryMedium: String
 )
 
 @Serializable
@@ -74,11 +74,11 @@ data class UpdateUserAttributesResponse(
 @JsExport
 @Serializable
 data class GetAttributeVerificationCodeResponse(
-    val CodeDeliveryDetails: CodeDeliveryDetails = CodeDeliveryDetails()
+    val CodeDeliveryDetails: CodeDeliveryDetails
 )
 
 @JsExport
 @Serializable
 data class ForgotPasswordResponse(
-    val CodeDeliveryDetails: CodeDeliveryDetails = CodeDeliveryDetails()
+    val CodeDeliveryDetails: CodeDeliveryDetails
 )

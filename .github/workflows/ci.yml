@@ -13,7 +13,7 @@ jobs:
         with:
           java-version: 11
       - name: Build and test (Android & Js)
-        run: region=${{ secrets.region }} clientid=${{ secrets.clientid }} ./gradlew build allTest
+        run: region=${{ secrets.region }} clientId=${{ secrets.clientid }} ./gradlew build test jsTest
       - name: Upload test result
         if: ${{ always() }}
         uses: actions/upload-artifact@v2
